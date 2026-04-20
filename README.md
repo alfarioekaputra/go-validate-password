@@ -29,13 +29,23 @@ if !valid {
 
 A password is considered valid if it meets **all** of the following criteria:
 
-| Rule | Requirement |
-|------|-------------|
-| Length | Minimum 14 characters (configurable) |
-| Uppercase | At least one uppercase letter (A–Z) |
-| Lowercase | At least one lowercase letter (a–z) |
-| Digit | At least one numeric digit (0–9) |
-| Special character | At least one punctuation or symbol character (e.g. `!@#$%^&*`) |
+| Rule | Requirement | Default |
+|------|-------------|---------|
+| Min length | Minimum number of Unicode characters | 14 |
+| Max length | Maximum number of Unicode characters | 128 |
+| Uppercase | At least one uppercase letter (A–Z) | — |
+| Lowercase | At least one lowercase letter (a–z) | — |
+| Digit | At least one decimal digit (0–9) | — |
+| Special character | At least one punctuation or symbol (e.g. `!@#$%^&*`) | — |
+
+> Length is counted in **Unicode characters (runes)**, not bytes — so multi-byte characters like `é`, `ñ`, `ü` each count as one character.
+
+## Options
+
+| Field | Type | Default | Notes |
+|-------|------|---------|-------|
+| `MinLength` | `int` | `14` | Minimum safe floor is `8` — values below are clamped |
+| `MaxLength` | `int` | `128` | Set to 0 to use default |
 
 ## Return Values
 
@@ -48,7 +58,7 @@ Both functions return `(bool, string)`:
 
 ### `ValidatePassword`
 
-Validates using the default minimum length of 14 characters.
+Validates using default settings (min 14, max 128 characters).
 
 ```go
 ok, msg := validate.ValidatePassword("MyP@ssw0rd!2024")
@@ -56,14 +66,15 @@ ok, msg := validate.ValidatePassword("MyP@ssw0rd!2024")
 
 ### `ValidatePasswordWithOptions`
 
-Validates with a custom minimum length via `Options`.
+Validates with custom min/max length via `Options`.
 
 ```go
-opts := validate.Options{MinLength: 8}
+opts := validate.Options{
+    MinLength: 8,
+    MaxLength: 64,
+}
 ok, msg := validate.ValidatePasswordWithOptions("MyP@ss1!", opts)
 ```
-
-If `MinLength` is 0 or not set, it defaults to 14.
 
 ## Example
 
@@ -76,12 +87,12 @@ import (
 )
 
 func main() {
-    // Default: minimum 14 characters
+    // Default: min 14, max 128 characters
     ok, msg := validate.ValidatePassword("ValidP@ssw0rd!123")
     fmt.Printf("[%v] %s\n", ok, msg)
 
-    // Custom: minimum 8 characters
-    opts := validate.Options{MinLength: 8}
+    // Custom: min 8, max 32 characters
+    opts := validate.Options{MinLength: 8, MaxLength: 32}
     ok, msg = validate.ValidatePasswordWithOptions("MyP@ss1!", opts)
     fmt.Printf("[%v] %s\n", ok, msg)
 }

@@ -3,19 +3,29 @@ package validate
 import (
 	"fmt"
 	"unicode"
+	"unicode/utf8"
 )
 
-const defaultMinLength = 14
+const (
+	defaultMinLength = 14
+	defaultMaxLength = 128
+	minAllowedLength = 8
+)
 
 // Options configures password validation rules.
 type Options struct {
-	// MinLength is the minimum required password length.
-	// Defaults to 14 if zero or not set.
+	// MinLength is the minimum required password length in Unicode characters.
+	// Defaults to 14 if zero or not set. Cannot be set below 8 (clamped).
 	MinLength int
+
+	// MaxLength is the maximum allowed password length in Unicode characters.
+	// Defaults to 128 if zero or not set.
+	MaxLength int
 }
 
 // ValidatePassword checks if the password meets strict security criteria:
-// - Minimum 14 characters
+// - Minimum 14 characters (Unicode runes)
+// - Maximum 128 characters
 // - At least one uppercase letter
 // - At least one lowercase letter
 // - At least one digit
@@ -30,9 +40,22 @@ func ValidatePasswordWithOptions(password string, opts Options) (bool, string) {
 	if minLength <= 0 {
 		minLength = defaultMinLength
 	}
+	if minLength < minAllowedLength {
+		minLength = minAllowedLength
+	}
 
-	if len(password) < minLength {
+	maxLength := opts.MaxLength
+	if maxLength <= 0 {
+		maxLength = defaultMaxLength
+	}
+
+	length := utf8.RuneCountInString(password)
+
+	if length < minLength {
 		return false, fmt.Sprintf("Password must be at least %d characters long", minLength)
+	}
+	if length > maxLength {
+		return false, fmt.Sprintf("Password must be at most %d characters long", maxLength)
 	}
 
 	var (
@@ -48,7 +71,7 @@ func ValidatePasswordWithOptions(password string, opts Options) (bool, string) {
 			hasUpper = true
 		case unicode.IsLower(char):
 			hasLower = true
-		case unicode.IsNumber(char):
+		case unicode.IsDigit(char):
 			hasNumber = true
 		case unicode.IsPunct(char) || unicode.IsSymbol(char):
 			hasSpecial = true
