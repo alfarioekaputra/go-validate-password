@@ -15,7 +15,7 @@ go get github.com/alfarioekaputra/go-validate-password
 ## Usage
 
 ```go
-import validate "github.com/alfarioekaputra/go-validate-password"
+import "github.com/alfarioekaputra/go-validate-password"
 
 valid, message := validate.ValidatePassword("MyP@ssw0rd!2024")
 if !valid {
